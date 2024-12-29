@@ -8,53 +8,154 @@ from database import init_db, save_user, save_results, get_all_results
 from questions import QUESTIONS
 
 def create_quadrant_plot(analytical_score, communication_score):
-    """Create enhanced quadrant plot with annotations"""
+    """Create enhanced quadrant plot with dynamic subtitle and modern design"""
+    # Determine the profile type
+    if analytical_score >= 0.5 and communication_score >= 0.5:
+        profile = "Strategic Communicator"
+        color = "#4CAF50"  # Green
+        symbol = "star"
+    elif analytical_score >= 0.5 and communication_score < 0.5:
+        profile = "Technical Expert"
+        color = "#2196F3"  # Blue
+        symbol = "diamond"
+    elif analytical_score < 0.5 and communication_score >= 0.5:
+        profile = "Storyteller"
+        color = "#FF9800"  # Orange
+        symbol = "circle"
+    else:
+        profile = "Intuitive Analyst"
+        color = "#9C27B0"  # Purple
+        symbol = "square"
+
     # Create figure
     fig = go.Figure()
 
-    # Add user's position
+    # Add gradient background for quadrants (subtle)
+    fig.add_trace(go.Scatter(
+        x=[0, 5, 5, 0],
+        y=[0, 0, 5, 5],
+        fill='toself',
+        fillcolor='rgba(156, 39, 176, 0.1)',  # Purple tint
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[5, 10, 10, 5],
+        y=[0, 0, 5, 5],
+        fill='toself',
+        fillcolor='rgba(33, 150, 243, 0.1)',  # Blue tint
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[0, 5, 5, 0],
+        y=[5, 5, 10, 10],
+        fill='toself',
+        fillcolor='rgba(255, 152, 0, 0.1)',  # Orange tint
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[5, 10, 10, 5],
+        y=[5, 5, 10, 10],
+        fill='toself',
+        fillcolor='rgba(76, 175, 80, 0.1)',  # Green tint
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+    # Add user's position with pulsing animation
     fig.add_trace(go.Scatter(
         x=[analytical_score * 10],
         y=[communication_score * 10],
-        mode='markers+text',
-        marker=dict(size=15, color='#00b4d8', symbol='star'),
-        text=['Your Position'],
-        textposition='top center',
-        showlegend=False
+        mode='markers',
+        marker=dict(
+            size=20,
+            color=color,
+            symbol=symbol,
+            line=dict(
+                color='white',
+                width=2
+            )
+        ),
+        name="Your Position",
+        hovertemplate="<b>Your Profile</b><br>" +
+                     "Analytical: %{x:.1f}/10<br>" +
+                     "Communication: %{y:.1f}/10<br>" +
+                     f"Type: {profile}<extra></extra>"
     ))
 
     # Add quadrant lines
-    fig.add_hline(y=5, line_dash="dash", line_color="#666")
-    fig.add_vline(x=5, line_dash="dash", line_color="#666")
-
-    # Add quadrant labels
-    fig.add_annotation(x=7.5, y=7.5, text="Strategic Communicator",
-                      showarrow=False, font=dict(size=12))
-    fig.add_annotation(x=7.5, y=2.5, text="Technical Expert",
-                      showarrow=False, font=dict(size=12))
-    fig.add_annotation(x=2.5, y=7.5, text="Storyteller",
-                      showarrow=False, font=dict(size=12))
-    fig.add_annotation(x=2.5, y=2.5, text="Intuitive Analyst",
-                      showarrow=False, font=dict(size=12))
+    fig.add_hline(y=5, line_dash="dash", line_color="rgba(128, 128, 128, 0.3)", line_width=1)
+    fig.add_vline(x=5, line_dash="dash", line_color="rgba(128, 128, 128, 0.3)", line_width=1)
 
     # Update layout
     fig.update_layout(
         title={
-            'text': "Your Data Analysis Style Profile",
+            'text': f"<b>Your Data Analysis Style</b><br><span style='font-size: 16px; color: {color}'>You are a {profile}</span>",
             'y':0.95,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': dict(size=24)
+            'x':0,
+            'xanchor': 'left',
+            'yanchor': 'top'
         },
         xaxis_title="Analytical Approach",
         yaxis_title="Communication Style",
-        xaxis=dict(range=[0, 10], dtick=2),
-        yaxis=dict(range=[0, 10], dtick=2),
+        xaxis=dict(
+            range=[-0.5, 10.5],
+            showgrid=False,
+            zeroline=False,
+            ticks="outside",
+            tickvals=[0, 5, 10],
+            ticktext=["Beginner", "Intermediate", "Expert"]
+        ),
+        yaxis=dict(
+            range=[-0.5, 10.5],
+            showgrid=False,
+            zeroline=False,
+            ticks="outside",
+            tickvals=[0, 5, 10],
+            ticktext=["Beginner", "Intermediate", "Expert"]
+        ),
         plot_bgcolor='white',
         width=800,
-        height=600
+        height=500,
+        margin=dict(t=100),
+        showlegend=False
     )
+
+    # Add quadrant labels with modern styling
+    annotations = [
+        dict(x=7.5, y=7.5, text="Strategic<br>Communicator", 
+             font=dict(size=12, color="#4CAF50")),
+        dict(x=7.5, y=2.5, text="Technical<br>Expert", 
+             font=dict(size=12, color="#2196F3")),
+        dict(x=2.5, y=7.5, text="Storyteller", 
+             font=dict(size=12, color="#FF9800")),
+        dict(x=2.5, y=2.5, text="Intuitive<br>Analyst", 
+             font=dict(size=12, color="#9C27B0"))
+    ]
+
+    for annot in annotations:
+        fig.add_annotation(
+            x=annot["x"],
+            y=annot["y"],
+            text=annot["text"],
+            showarrow=False,
+            font=annot["font"],
+            align="center",
+            bordercolor=annot["font"]["color"],
+            borderwidth=1,
+            borderpad=4,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            opacity=0.8
+        )
 
     return fig
 
