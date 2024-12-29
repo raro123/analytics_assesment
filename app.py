@@ -1,5 +1,6 @@
 # app.py
 import streamlit as st
+import re
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -57,6 +58,27 @@ def create_quadrant_plot(analytical_score, communication_score):
 
     return fig
 
+def is_valid_email(email):
+    """
+    Validate email format using regex.
+    Basic checks for:
+    - Has @ symbol
+    - Has valid domain
+    - No special characters except .-_
+    - Proper length
+    """
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(pattern, email):
+        return False
+    
+    # Additional checks
+    if len(email) > 254:  # Maximum length check
+        return False
+    
+    if '..' in email:  # No consecutive dots
+        return False
+    
+    return True
 def main():
     # Initialize database
     init_db()
@@ -96,33 +118,40 @@ def main():
         st.session_state.user_id = None
 
     if st.session_state.stage == 'register':
-        st.title("Data Analysis Style Assessment")
-        st.markdown("""
-        <div class="description">
-        Discover your unique data analysis style and learn how to leverage your strengths. 
-        This assessment evaluates your analytical approach and communication preferences 
-        to help you understand your natural tendencies in data analysis.
-        </div>
-        """, unsafe_allow_html=True)
+        st.title("Data Analysis Skill Assessment")
         
-        with st.form("registration", clear_on_submit=True):
+        with st.form("registration"):
             email = st.text_input("Email")
             profession = st.selectbox(
                 "Current Profession",
                 ["Data Analyst", "Data Scientist", "Business Analyst", "Student", "Other"]
             )
-            st.markdown("*Your email will only be used to track your assessment results.*")
+            st.markdown("*Your email will only be used to track your assessment results and further communications.*")
             
-            if st.form_submit_button("Start Assessment"):
-                if email and profession:
-                    user_id = save_user(email, profession)
-                    if user_id:
-                        st.session_state.user_id = user_id
-                        st.session_state.stage = 'assessment'
-                        st.rerun()
-                else:
+            submitted = st.form_submit_button("Start Assessment")
+            
+            if submitted:
+                if not email or not profession:
                     st.error("Please fill in all fields")
-
+                elif not is_valid_email(email):
+                    st.error("Please enter a valid email address")
+                elif email.endswith(('.test', '.example', '.invalid', '.localhost')):
+                    st.error("Please use a valid email domain")
+                else:
+                    # Additional checks for common disposable email domains
+                    disposable_domains = {'temp-mail.org', 'tempmail.com', 'throwawaymail.com'}
+                    email_domain = email.split('@')[1]
+                    if email_domain in disposable_domains:
+                        st.error("Please use a valid business or personal email")
+                    else:
+                        user_id = save_user(email, profession)
+                        if user_id:
+                            st.session_state.user_id = user_id
+                            st.session_state.stage = 'assessment'
+                            st.rerun()
+                        else:
+                            st.error("There was an error starting your assessment. Please try again.")
+                            
     elif st.session_state.stage == 'assessment':
         current_q = len(st.session_state.answers)
         if current_q < len(QUESTIONS):

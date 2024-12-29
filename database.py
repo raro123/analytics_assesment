@@ -51,22 +51,54 @@ def get_user_id_by_email(email):
         return None
     finally:
         conn.close()
+        
+def sanitize_email(email):
+    """
+    Basic email sanitization:
+    - Convert to lowercase
+    - Strip whitespace
+    - Remove any potentially dangerous characters
+    """
+    if not email:
+        return None
+        
+    # Convert to lowercase
+    email = email.lower().strip()
+    
+    # Remove any potentially dangerous characters
+    email = ''.join(c for c in email if c.isalnum() or c in ['@', '.', '-', '_', '+'])
+    
+    return email
 
 def save_user(email, profession):
-    """Save user and return user_id (either existing or new)"""
-    # First check if user exists
-    existing_id = get_user_id_by_email(email)
-    if existing_id:
-        return existing_id
+    """Save a new user to the database or get existing user ID"""
+    # Sanitize email
+    email = sanitize_email(email)
+    if not email:
+        return None
         
-    # If not, create new user
+    # Maximum length check
+    if len(email) > 254:
+        return None
+        
     conn = get_db()
     c = conn.cursor()
     try:
+        # Check if email exists
+        c.execute('SELECT id FROM users WHERE email = ?', (email,))
+        existing_user = c.fetchone()
+        
+        if existing_user:
+            return existing_user[0]
+            
+        # Insert new user
         c.execute('INSERT INTO users (email, profession) VALUES (?, ?)', 
                  (email, profession))
         conn.commit()
         return c.lastrowid
+    except sqlite3.IntegrityError as e:
+        print(f"Database integrity error: {e}")
+        return None
     except Exception as e:
         print(f"Error saving user: {e}")
         return None
