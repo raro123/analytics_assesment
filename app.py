@@ -118,7 +118,7 @@ def main():
         st.session_state.user_id = None
 
     if st.session_state.stage == 'register':
-        st.title("Data Analysis Skill Assessment")
+        st.title("Data Analysis Skill Assessment (Sample)")
         
         with st.form("registration"):
             email = st.text_input("Email")
@@ -196,7 +196,7 @@ def main():
             communication_score
         )
         
-        st.title("Your Assessment Results")
+        st.title("Your Sample Assessment Results")
         
         # Display the plot
         fig = create_quadrant_plot(analytical_score, communication_score)
